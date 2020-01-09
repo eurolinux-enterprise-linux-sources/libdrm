@@ -21,6 +21,10 @@
  * IN THE SOFTWARE.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -29,6 +33,8 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include "libdrm.h"
+#include "xf86drm.h"
 #include "intel_chipset.h"
 #include "intel_bufmgr.h"
 
@@ -104,11 +110,7 @@ static float int_as_float(uint32_t intval)
 	return uval.f;
 }
 
-static void
-instr_out(struct drm_intel_decode *ctx, unsigned int index,
-	  const char *fmt, ...) __attribute__((format(__printf__, 3, 4)));
-
-static void
+static void DRM_PRINTFLIKE(3, 4)
 instr_out(struct drm_intel_decode *ctx, unsigned int index,
 	  const char *fmt, ...)
 {
@@ -3815,7 +3817,7 @@ decode_3d_i830(struct drm_intel_decode *ctx)
 	return 1;
 }
 
-struct drm_intel_decode *
+drm_public struct drm_intel_decode *
 drm_intel_decode_context_alloc(uint32_t devid)
 {
 	struct drm_intel_decode *ctx;
@@ -3827,7 +3829,9 @@ drm_intel_decode_context_alloc(uint32_t devid)
 	ctx->devid = devid;
 	ctx->out = stdout;
 
-	if (IS_GEN8(devid))
+	if (IS_GEN9(devid))
+		ctx->gen = 9;
+	else if (IS_GEN8(devid))
 		ctx->gen = 8;
 	else if (IS_GEN7(devid))
 		ctx->gen = 7;
@@ -3847,20 +3851,20 @@ drm_intel_decode_context_alloc(uint32_t devid)
 	return ctx;
 }
 
-void
+drm_public void
 drm_intel_decode_context_free(struct drm_intel_decode *ctx)
 {
 	free(ctx);
 }
 
-void
+drm_public void
 drm_intel_decode_set_dump_past_end(struct drm_intel_decode *ctx,
 				   int dump_past_end)
 {
 	ctx->dump_past_end = !!dump_past_end;
 }
 
-void
+drm_public void
 drm_intel_decode_set_batch_pointer(struct drm_intel_decode *ctx,
 				   void *data, uint32_t hw_offset, int count)
 {
@@ -3869,7 +3873,7 @@ drm_intel_decode_set_batch_pointer(struct drm_intel_decode *ctx,
 	ctx->base_count = count;
 }
 
-void
+drm_public void
 drm_intel_decode_set_head_tail(struct drm_intel_decode *ctx,
 			       uint32_t head, uint32_t tail)
 {
@@ -3877,7 +3881,7 @@ drm_intel_decode_set_head_tail(struct drm_intel_decode *ctx,
 	ctx->tail = tail;
 }
 
-void
+drm_public void
 drm_intel_decode_set_output_file(struct drm_intel_decode *ctx,
 				 FILE *out)
 {
@@ -3891,7 +3895,7 @@ drm_intel_decode_set_output_file(struct drm_intel_decode *ctx,
  * \param count number of DWORDs to decode in the batch buffer
  * \param hw_offset hardware address for the buffer
  */
-void
+drm_public void
 drm_intel_decode(struct drm_intel_decode *ctx)
 {
 	int ret;

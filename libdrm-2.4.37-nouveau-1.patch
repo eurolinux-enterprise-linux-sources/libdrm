@@ -1,4 +1,4 @@
-From 77e3ab9962c13e75c121ba3686a07e441ebf9191 Mon Sep 17 00:00:00 2001
+From 346bb844e5e3773b4c39fc182f16912b4c0160ee Mon Sep 17 00:00:00 2001
 From: Ben Skeggs <bskeggs@redhat.com>
 Date: Mon, 2 Jul 2012 10:50:45 +1000
 Subject: [PATCH] nouveau: forward-port old nouveau interface to libdrm 2.4.37
@@ -10,34 +10,33 @@ needed instead.
 
 v2: renamed libdrm_nouveau_2 to libdrm_nouveau2 as suggested by airlied
 ---
- Makefile.am                    |    2 +-
- configure.ac                   |    4 +-
- nouveau-1/Makefile.am          |   43 ++++
- nouveau-1/libdrm_nouveau.pc.in |   11 +
- nouveau-1/nouveau_bo.c         |  549 ++++++++++++++++++++++++++++++++++++++++
- nouveau-1/nouveau_bo.h         |  104 ++++++++
- nouveau-1/nouveau_channel.c    |  142 +++++++++++
- nouveau-1/nouveau_channel.h    |   57 +++++
- nouveau-1/nouveau_device.c     |  198 +++++++++++++++
- nouveau-1/nouveau_device.h     |   33 +++
- nouveau-1/nouveau_drmif.h      |   58 +++++
- nouveau-1/nouveau_grobj.c      |  148 +++++++++++
- nouveau-1/nouveau_grobj.h      |   48 ++++
- nouveau-1/nouveau_notifier.c   |  148 +++++++++++
- nouveau-1/nouveau_notifier.h   |   63 +++++
- nouveau-1/nouveau_private.h    |  136 ++++++++++
- nouveau-1/nouveau_pushbuf.c    |  344 +++++++++++++++++++++++++
- nouveau-1/nouveau_pushbuf.h    |  162 ++++++++++++
- nouveau-1/nouveau_reloc.c      |  154 +++++++++++
- nouveau-1/nouveau_reloc.h      |   32 +++
- nouveau-1/nouveau_resource.c   |  124 +++++++++
- nouveau-1/nouveau_resource.h   |   51 ++++
- nouveau-1/nv04_pushbuf.h       |   66 +++++
- nouveau-1/nvc0_pushbuf.h       |   92 +++++++
- nouveau/Makefile.am            |   20 +-
- nouveau/libdrm_nouveau.pc.in   |   11 -
- nouveau/libdrm_nouveau2.pc.in  |   11 +
- 27 files changed, 2788 insertions(+), 23 deletions(-)
+ Makefile.am                    |   2 +-
+ configure.ac                   |   4 +-
+ nouveau-1/Makefile.am          |  43 ++++
+ nouveau-1/libdrm_nouveau.pc.in |  11 +
+ nouveau-1/nouveau_bo.c         | 549 +++++++++++++++++++++++++++++++++++++++++
+ nouveau-1/nouveau_bo.h         | 104 ++++++++
+ nouveau-1/nouveau_channel.c    | 142 +++++++++++
+ nouveau-1/nouveau_channel.h    |  57 +++++
+ nouveau-1/nouveau_device.c     | 198 +++++++++++++++
+ nouveau-1/nouveau_device.h     |  33 +++
+ nouveau-1/nouveau_drmif.h      |  58 +++++
+ nouveau-1/nouveau_grobj.c      | 148 +++++++++++
+ nouveau-1/nouveau_grobj.h      |  48 ++++
+ nouveau-1/nouveau_notifier.c   | 148 +++++++++++
+ nouveau-1/nouveau_notifier.h   |  63 +++++
+ nouveau-1/nouveau_private.h    | 136 ++++++++++
+ nouveau-1/nouveau_pushbuf.c    | 344 ++++++++++++++++++++++++++
+ nouveau-1/nouveau_pushbuf.h    | 162 ++++++++++++
+ nouveau-1/nouveau_reloc.c      | 154 ++++++++++++
+ nouveau-1/nouveau_reloc.h      |  32 +++
+ nouveau-1/nouveau_resource.c   | 124 ++++++++++
+ nouveau-1/nouveau_resource.h   |  51 ++++
+ nouveau-1/nv04_pushbuf.h       |  66 +++++
+ nouveau-1/nvc0_pushbuf.h       |  92 +++++++
+ nouveau/Makefile.am            |  18 +-
+ nouveau/libdrm_nouveau2.pc.in  |  11 +
+ 26 files changed, 2788 insertions(+), 10 deletions(-)
  create mode 100644 nouveau-1/Makefile.am
  create mode 100644 nouveau-1/libdrm_nouveau.pc.in
  create mode 100644 nouveau-1/nouveau_bo.c
@@ -60,11 +59,10 @@ v2: renamed libdrm_nouveau_2 to libdrm_nouveau2 as suggested by airlied
  create mode 100644 nouveau-1/nouveau_resource.h
  create mode 100644 nouveau-1/nv04_pushbuf.h
  create mode 100644 nouveau-1/nvc0_pushbuf.h
- delete mode 100644 nouveau/libdrm_nouveau.pc.in
  create mode 100644 nouveau/libdrm_nouveau2.pc.in
 
 diff --git a/Makefile.am b/Makefile.am
-index 256a8cc..045add1 100644
+index 3cb516c..5efc53b 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -34,7 +34,7 @@ INTEL_SUBDIR = intel
@@ -77,10 +75,10 @@ index 256a8cc..045add1 100644
  
  if HAVE_RADEON
 diff --git a/configure.ac b/configure.ac
-index a1c8c69..86dd25e 100644
+index 8afee83..9197eef 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -319,8 +319,10 @@ AC_CONFIG_FILES([
+@@ -422,8 +422,10 @@ AC_CONFIG_FILES([
  	intel/libdrm_intel.pc
  	radeon/Makefile
  	radeon/libdrm_radeon.pc
@@ -160,7 +158,7 @@ index 0000000..c78a28a
 +Requires.private: libdrm
 diff --git a/nouveau-1/nouveau_bo.c b/nouveau-1/nouveau_bo.c
 new file mode 100644
-index 0000000..d6bb22d
+index 0000000..9cb1410
 --- /dev/null
 +++ b/nouveau-1/nouveau_bo.c
 @@ -0,0 +1,549 @@
@@ -2988,10 +2986,10 @@ index 0000000..40dc7e6
 +
 +#endif
 diff --git a/nouveau/Makefile.am b/nouveau/Makefile.am
-index 206e892..f21157e 100644
+index 7543e43..51f3e0e 100644
 --- a/nouveau/Makefile.am
 +++ b/nouveau/Makefile.am
-@@ -6,20 +6,20 @@ AM_CFLAGS = \
+@@ -9,17 +9,19 @@ AM_CFLAGS = \
  	-I$(top_srcdir)/include/drm \
  	-DDEBUG
  
@@ -2999,28 +2997,25 @@ index 206e892..f21157e 100644
 -libdrm_nouveau_ladir = $(libdir)
 -libdrm_nouveau_la_LDFLAGS = -version-number 2:0:0 -no-undefined
 -libdrm_nouveau_la_LIBADD = ../libdrm.la @PTHREADSTUBS_LIBS@
+-
+-libdrm_nouveau_la_SOURCES = $(LIBDRM_NOUVEAU_FILES)
 +libdrm_nouveau2_la_LTLIBRARIES = libdrm_nouveau2.la
 +libdrm_nouveau2_ladir = $(libdir)
 +libdrm_nouveau2_la_LDFLAGS = -version-number 2:0:0 -no-undefined
 +libdrm_nouveau2_la_LIBADD = ../libdrm.la @PTHREADSTUBS_LIBS@
- 
--libdrm_nouveau_la_SOURCES = nouveau.c \
--			    pushbuf.c \
--			    bufctx.c \
--			    abi16.c \
--			    private.h
 +libdrm_nouveau2_la_SOURCES = nouveau.c \
 +			     pushbuf.c \
 +			     bufctx.c \
 +			     abi16.c \
 +			     private.h
  
- 
  libdrm_nouveauincludedir = ${includedir}/libdrm
- libdrm_nouveauinclude_HEADERS = nouveau.h
+ libdrm_nouveauinclude_HEADERS = $(LIBDRM_NOUVEAU_H_FILES)
  
  pkgconfigdir = @pkgconfigdir@
 -pkgconfig_DATA = libdrm_nouveau.pc
+-
+ EXTRA_DIST = Android.mk
 +pkgconfig_DATA = libdrm_nouveau2.pc
 diff --git a/nouveau/libdrm_nouveau2.pc.in b/nouveau/libdrm_nouveau2.pc.in
 new file mode 100644
@@ -3040,5 +3035,5 @@ index 0000000..36971e8
 +Cflags: -I${includedir} -I${includedir}/libdrm
 +Requires.private: libdrm
 -- 
-1.7.10.2
+1.8.3.1
 

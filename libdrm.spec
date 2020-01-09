@@ -2,8 +2,8 @@
 
 Summary: Direct Rendering Manager runtime library
 Name: libdrm
-Version: 2.4.52
-Release: 4%{?dist}
+Version: 2.4.59
+Release: 2%{?dist}
 License: MIT
 Group: System Environment/Libraries
 URL: http://dri.sourceforge.net
@@ -36,6 +36,8 @@ Patch4: libdrm-2.4.0-no-bc.patch
 Patch5: libdrm-2.4.25-check-programs.patch
 # fix plymouth
 Patch8: libdrm-2.4.37-nouveau-1.patch
+# covscan issue
+Patch9: 0001-nouveau-fix-unlock-nouveau_bo_name_ref.patch
 
 %description
 Direct Rendering Manager runtime library
@@ -70,6 +72,7 @@ rm -f nouveau/libdrm_nouveau.pc.in
 %patch4 -p1 -b .no-bc
 %patch5 -p1 -b .check
 %patch8 -p1 -b .nouveau
+%patch9 -p1 -b .nouveau_lock
 
 %build
 autoreconf -v --install || exit 1
@@ -202,6 +205,12 @@ done
 %{_libdir}/pkgconfig/libdrm_nouveau2.pc
 
 %changelog
+* Mon Feb 16 2015 Jérôme Glisse <jglisse@redhat.com> 2.4.59-2
+- fix covscan issue
+
+* Mon Jan 26 2015 Jérôme Glisse <jglisse@redhat.com> 2.4.59-1
+- libdrm 2.4.59
+
 * Fri May 30 2014 Ben Skeggs <bskeggs@redhat.com> 2.4.52-4
 - nouveau workaround for plymouth bug
 

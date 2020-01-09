@@ -240,6 +240,15 @@ typedef struct _drmModeProperty {
 	uint32_t *blob_ids; /* store the blob IDs */
 } drmModePropertyRes, *drmModePropertyPtr;
 
+static inline int drm_property_type_is(drmModePropertyPtr property,
+		uint32_t type)
+{
+	/* instanceof for props.. handles extended type vs original types: */
+	if (property->flags & DRM_MODE_PROP_EXTENDED_TYPE)
+		return (property->flags & DRM_MODE_PROP_EXTENDED_TYPE) == type;
+	return property->flags & type;
+}
+
 typedef struct _drmModeCrtc {
 	uint32_t crtc_id;
 	uint32_t buffer_id; /**< FB id to connect to 0 = disconnect */
@@ -295,6 +304,10 @@ typedef struct _drmModeConnector {
 	int count_encoders;
 	uint32_t *encoders; /**< List of encoder ids */
 } drmModeConnector, *drmModeConnectorPtr;
+
+#define DRM_PLANE_TYPE_OVERLAY 0
+#define DRM_PLANE_TYPE_PRIMARY 1
+#define DRM_PLANE_TYPE_CURSOR  2
 
 typedef struct _drmModeObjectProperties {
 	uint32_t count_props;
@@ -445,7 +458,7 @@ extern drmModePlaneResPtr drmModeGetPlaneResources(int fd);
 extern drmModePlanePtr drmModeGetPlane(int fd, uint32_t plane_id);
 extern int drmModeSetPlane(int fd, uint32_t plane_id, uint32_t crtc_id,
 			   uint32_t fb_id, uint32_t flags,
-			   uint32_t crtc_x, uint32_t crtc_y,
+			   int32_t crtc_x, int32_t crtc_y,
 			   uint32_t crtc_w, uint32_t crtc_h,
 			   uint32_t src_x, uint32_t src_y,
 			   uint32_t src_w, uint32_t src_h);

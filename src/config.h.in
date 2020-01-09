@@ -30,8 +30,14 @@
 /* Have freedreno support */
 #undef HAVE_FREEDRENO
 
+/* Have freedreno support for KGSL kernel interface */
+#undef HAVE_FREEDRENO_KGSL
+
 /* Install test programs */
 #undef HAVE_INSTALL_TESTS
+
+/* Have intel support */
+#undef HAVE_INTEL
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -78,11 +84,17 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
+/* Have Tegra support */
+#undef HAVE_TEGRA
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
 /* Use valgrind intrinsics to suppress false warnings */
 #undef HAVE_VALGRIND
+
+/* Compiler has -fvisibility support */
+#undef HAVE_VISIBILITY
 
 /* Have vmwgfx kernel headers */
 #undef HAVE_VMWGFX
