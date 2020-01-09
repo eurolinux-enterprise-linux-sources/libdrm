@@ -3022,23 +3022,6 @@ index 206e892..f21157e 100644
  pkgconfigdir = @pkgconfigdir@
 -pkgconfig_DATA = libdrm_nouveau.pc
 +pkgconfig_DATA = libdrm_nouveau2.pc
-diff --git a/nouveau/libdrm_nouveau.pc.in b/nouveau/libdrm_nouveau.pc.in
-deleted file mode 100644
-index 6170613..0000000
---- a/nouveau/libdrm_nouveau.pc.in
-+++ /dev/null
-@@ -1,11 +0,0 @@
--prefix=@prefix@
--exec_prefix=@exec_prefix@
--libdir=@libdir@
--includedir=@includedir@
--
--Name: libdrm_nouveau
--Description: Userspace interface to nouveau kernel DRM services
--Version: 2.4.33
--Libs: -L${libdir} -ldrm_nouveau
--Cflags: -I${includedir} -I${includedir}/libdrm -I${includedir}/nouveau
--Requires.private: libdrm
 diff --git a/nouveau/libdrm_nouveau2.pc.in b/nouveau/libdrm_nouveau2.pc.in
 new file mode 100644
 index 0000000..36971e8

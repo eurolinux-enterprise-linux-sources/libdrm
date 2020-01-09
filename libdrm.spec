@@ -2,8 +2,8 @@
 
 Summary: Direct Rendering Manager runtime library
 Name: libdrm
-Version: 2.4.39
-Release: 1%{?dist}
+Version: 2.4.45
+Release: 2%{?dist}
 License: MIT
 Group: System Environment/Libraries
 URL: http://dri.sourceforge.net
@@ -25,6 +25,11 @@ BuildRequires: libatomic_ops-devel
 BuildRequires: libpciaccess-devel
 
 Source2: 91-drm-modeset.rules
+
+# from git
+
+Patch1: 0001-intel-Fix-Haswell-GT3-names.patch
+Patch2: 0002-intel-Adding-more-reserved-PCI-IDs-for-Haswell.patch
 
 # hardcode the 666 instead of 660 for device nodes
 Patch3: libdrm-make-dri-perms-okay.patch
@@ -60,6 +65,12 @@ Utility programs for the kernel DRM interface.  Will void your warranty.
 %prep
 #%setup -q -n %{name}-%{gitdate}
 %setup -q
+
+# this is way easier than rebasing a "delete" hunk in the nouveau patch...
+rm -f nouveau/libdrm_nouveau.pc.in
+
+%patch1 -p1
+%patch2 -p1
 %patch3 -p1 -b .forceperms
 %patch4 -p1 -b .no-bc
 %patch5 -p1 -b .check
@@ -71,7 +82,7 @@ autoreconf -v --install || exit 1
 %ifarch %{arm}
         --enable-omap-experimental-api \
 %endif
-	--enable-udev --disable-libkms
+	--enable-udev --disable-libkms --disable-manpages
 make %{?_smp_mflags}
 pushd tests
 make %{?smp_mflags} `make check-programs`
@@ -196,6 +207,12 @@ done
 %{_libdir}/pkgconfig/libdrm_nouveau2.pc
 
 %changelog
+* Thu Sep 12 2013 Dave Airlie <airlied@redhat.com> 2.4.45-2
+- attempt to fix rebuild tests (#985579)
+
+* Tue Jun 18 2013 Adam Jackson <ajax@redhat.com> 2.4.45-1
+- libdrm 2.4.45 + Haswell updates from git (#914774)
+
 * Tue Aug 28 2012 Dave Airlie <airlied@redhat.com> 2.4.39-1
 - latest upstream release
 - drop drm-utils in RHEL

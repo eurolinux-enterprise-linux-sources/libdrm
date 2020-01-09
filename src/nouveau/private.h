@@ -99,6 +99,7 @@ struct nouveau_device_priv {
 	uint32_t *client;
 	int nr_client;
 	bool have_bo_usage;
+	int gart_limit_percent, vram_limit_percent;
 };
 
 static inline struct nouveau_device_priv *
@@ -113,6 +114,7 @@ nouveau_device_open_existing(struct nouveau_device **, int, int, drm_context_t);
 /* abi16.c */
 int  abi16_chan_nv04(struct nouveau_object *);
 int  abi16_chan_nvc0(struct nouveau_object *);
+int  abi16_chan_nve0(struct nouveau_object *);
 int  abi16_engobj(struct nouveau_object *);
 int  abi16_ntfy(struct nouveau_object *);
 void abi16_bo_info(struct nouveau_bo *, struct drm_nouveau_gem_info *);

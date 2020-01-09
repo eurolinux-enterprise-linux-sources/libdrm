@@ -77,6 +77,7 @@ nouveau_device_wrap(int fd, int close, struct nouveau_device **pdev)
 	uint64_t chipset, vram, gart, bousage;
 	drmVersionPtr ver;
 	int ret;
+	char *tmp;
 
 #ifdef DEBUG
 	debug_init(getenv("NOUVEAU_LIBDRM_DEBUG"));
@@ -114,14 +115,27 @@ nouveau_device_wrap(int fd, int close, struct nouveau_device **pdev)
 		nvdev->have_bo_usage = (bousage != 0);
 
 	nvdev->close = close;
+
+	tmp = getenv("NOUVEAU_LIBDRM_VRAM_LIMIT_PERCENT");
+	if (tmp)
+		nvdev->vram_limit_percent = atoi(tmp);
+	else
+		nvdev->vram_limit_percent = 80;
+	tmp = getenv("NOUVEAU_LIBDRM_GART_LIMIT_PERCENT");
+	if (tmp)
+		nvdev->gart_limit_percent = atoi(tmp);
+	else
+		nvdev->gart_limit_percent = 80;
 	DRMINITLISTHEAD(&nvdev->bo_list);
 	nvdev->base.object.oclass = NOUVEAU_DEVICE_CLASS;
 	nvdev->base.lib_version = 0x01000000;
 	nvdev->base.chipset = chipset;
 	nvdev->base.vram_size = vram;
 	nvdev->base.gart_size = gart;
-	nvdev->base.vram_limit = (nvdev->base.vram_size * 80) / 100;
-	nvdev->base.gart_limit = (nvdev->base.gart_size * 80) / 100;
+	nvdev->base.vram_limit =
+		(nvdev->base.vram_size * nvdev->vram_limit_percent) / 100;
+	nvdev->base.gart_limit =
+		(nvdev->base.gart_size * nvdev->gart_limit_percent) / 100;
 
 	*pdev = &nvdev->base;
 	return 0;
@@ -247,7 +261,10 @@ nouveau_object_new(struct nouveau_object *parent, uint64_t handle,
 			if (dev->chipset < 0xc0)
 				ret = abi16_chan_nv04(obj);
 			else
+			if (dev->chipset < 0xe0)
 				ret = abi16_chan_nvc0(obj);
+			else
+				ret = abi16_chan_nve0(obj);
 		}
 			break;
 		default:

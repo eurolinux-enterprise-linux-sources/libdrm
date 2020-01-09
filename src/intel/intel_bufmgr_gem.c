@@ -54,6 +54,9 @@
 #include <stdbool.h>
 
 #include "errno.h"
+#ifndef ETIME
+#define ETIME ETIMEDOUT
+#endif
 #include "libdrm_lists.h"
 #include "intel_bufmgr.h"
 #include "intel_bufmgr_priv.h"
@@ -122,6 +125,7 @@ typedef struct _drm_intel_bufmgr_gem {
 	unsigned int has_wait_timeout : 1;
 	unsigned int bo_reuse : 1;
 	unsigned int no_exec : 1;
+	unsigned int has_vebox : 1;
 	bool fenced_relocs;
 
 	FILE *aub_file;
@@ -1730,9 +1734,10 @@ drm_intel_gem_bo_clear_relocs(drm_intel_bo *bo, int start)
 	assert(bo_gem->reloc_count >= start);
 	/* Unreference the cleared target buffers */
 	for (i = start; i < bo_gem->reloc_count; i++) {
-		if (bo_gem->reloc_target_info[i].bo != bo) {
-			drm_intel_gem_bo_unreference_locked_timed(bo_gem->
-								  reloc_target_info[i].bo,
+		drm_intel_bo_gem *target_bo_gem = (drm_intel_bo_gem *) bo_gem->reloc_target_info[i].bo;
+		if (&target_bo_gem->bo != bo) {
+			bo_gem->reloc_tree_fences -= target_bo_gem->reloc_tree_fences;
+			drm_intel_gem_bo_unreference_locked_timed(&target_bo_gem->bo,
 								  time.tv_sec);
 		}
 	}
@@ -2007,6 +2012,8 @@ aub_build_dump_ringbuffer(drm_intel_bufmgr_gem *bufmgr_gem,
 
 	if (ring_flag == I915_EXEC_BSD)
 		ring = AUB_TRACE_TYPE_RING_PRB1;
+	else if (ring_flag == I915_EXEC_BLT)
+		ring = AUB_TRACE_TYPE_RING_PRB2;
 
 	/* Make a ring buffer to execute our batchbuffer. */
 	memset(ringbuffer, 0, sizeof(ringbuffer));
@@ -2205,6 +2212,10 @@ do_exec2(drm_intel_bo *bo, int used, drm_intel_context *ctx,
 		break;
 	case I915_EXEC_BSD:
 		if (!bufmgr_gem->has_bsd)
+			return -EINVAL;
+		break;
+	case I915_EXEC_VEBOX:
+		if (!bufmgr_gem->has_vebox)
 			return -EINVAL;
 		break;
 	case I915_EXEC_RENDER:
@@ -2473,7 +2484,13 @@ drm_intel_bo_gem_export_to_prime(drm_intel_bo *bo, int *prime_fd)
 	drm_intel_bufmgr_gem *bufmgr_gem = (drm_intel_bufmgr_gem *) bo->bufmgr;
 	drm_intel_bo_gem *bo_gem = (drm_intel_bo_gem *) bo;
 
-	return drmPrimeHandleToFD(bufmgr_gem->fd, bo_gem->gem_handle, DRM_CLOEXEC, prime_fd);
+	if (drmPrimeHandleToFD(bufmgr_gem->fd, bo_gem->gem_handle,
+			       DRM_CLOEXEC, prime_fd) != 0)
+		return -errno;
+
+	bo_gem->reusable = false;
+
+	return 0;
 }
 
 static int
@@ -3112,7 +3129,11 @@ drm_intel_bufmgr_gem_init(int fd, int batch_size)
 		bufmgr_gem->has_llc = (IS_GEN6(bufmgr_gem->pci_device) |
 				IS_GEN7(bufmgr_gem->pci_device));
 	} else
-		bufmgr_gem->has_llc = ret == 0;
+		bufmgr_gem->has_llc = *gp.value;
+
+	gp.param = I915_PARAM_HAS_VEBOX;
+	ret = drmIoctl(bufmgr_gem->fd, DRM_IOCTL_I915_GETPARAM, &gp);
+	bufmgr_gem->has_vebox = (ret == 0) & (*gp.value > 0);
 
 	if (bufmgr_gem->gen < 4) {
 		gp.param = I915_PARAM_NUM_FENCES_AVAIL;
