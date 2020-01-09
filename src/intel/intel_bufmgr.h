@@ -38,6 +38,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 struct drm_clip_rect;
 
 typedef struct _drm_intel_bufmgr drm_intel_bufmgr;
@@ -264,6 +268,9 @@ int drm_intel_get_reset_stats(drm_intel_context *ctx,
 			      uint32_t *active,
 			      uint32_t *pending);
 
+int drm_intel_get_subslice_total(int fd, unsigned int *subslice_total);
+int drm_intel_get_eu_total(int fd, unsigned int *eu_total);
+
 /** @{ Compatibility defines to keep old code building despite the symbol rename
  * from dri_* to drm_intel_*
  */
@@ -304,5 +311,9 @@ int drm_intel_get_reset_stats(drm_intel_context *ctx,
 #define intel_bufmgr_fake_evict_all drm_intel_bufmgr_fake_evict_all
 
 /** @{ */
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* INTEL_BUFMGR_H */

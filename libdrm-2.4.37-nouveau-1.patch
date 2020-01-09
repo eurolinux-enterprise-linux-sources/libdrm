@@ -1,71 +1,21 @@
-From 346bb844e5e3773b4c39fc182f16912b4c0160ee Mon Sep 17 00:00:00 2001
-From: Ben Skeggs <bskeggs@redhat.com>
-Date: Mon, 2 Jul 2012 10:50:45 +1000
-Subject: [PATCH] nouveau: forward-port old nouveau interface to libdrm 2.4.37
-
-For compatibility with current F17, the old interface's pkgconfig data
-is the same as it was before.  If we ever want to update the DDX or Mesa
-to use the newer interface instead, libdrm_nouveau2 pkgconfig will be
-needed instead.
-
-v2: renamed libdrm_nouveau_2 to libdrm_nouveau2 as suggested by airlied
----
- Makefile.am                    |   2 +-
- configure.ac                   |   4 +-
- nouveau-1/Makefile.am          |  43 ++++
- nouveau-1/libdrm_nouveau.pc.in |  11 +
- nouveau-1/nouveau_bo.c         | 549 +++++++++++++++++++++++++++++++++++++++++
- nouveau-1/nouveau_bo.h         | 104 ++++++++
- nouveau-1/nouveau_channel.c    | 142 +++++++++++
- nouveau-1/nouveau_channel.h    |  57 +++++
- nouveau-1/nouveau_device.c     | 198 +++++++++++++++
- nouveau-1/nouveau_device.h     |  33 +++
- nouveau-1/nouveau_drmif.h      |  58 +++++
- nouveau-1/nouveau_grobj.c      | 148 +++++++++++
- nouveau-1/nouveau_grobj.h      |  48 ++++
- nouveau-1/nouveau_notifier.c   | 148 +++++++++++
- nouveau-1/nouveau_notifier.h   |  63 +++++
- nouveau-1/nouveau_private.h    | 136 ++++++++++
- nouveau-1/nouveau_pushbuf.c    | 344 ++++++++++++++++++++++++++
- nouveau-1/nouveau_pushbuf.h    | 162 ++++++++++++
- nouveau-1/nouveau_reloc.c      | 154 ++++++++++++
- nouveau-1/nouveau_reloc.h      |  32 +++
- nouveau-1/nouveau_resource.c   | 124 ++++++++++
- nouveau-1/nouveau_resource.h   |  51 ++++
- nouveau-1/nv04_pushbuf.h       |  66 +++++
- nouveau-1/nvc0_pushbuf.h       |  92 +++++++
- nouveau/Makefile.am            |  18 +-
- nouveau/libdrm_nouveau2.pc.in  |  11 +
- 26 files changed, 2788 insertions(+), 10 deletions(-)
- create mode 100644 nouveau-1/Makefile.am
- create mode 100644 nouveau-1/libdrm_nouveau.pc.in
- create mode 100644 nouveau-1/nouveau_bo.c
- create mode 100644 nouveau-1/nouveau_bo.h
- create mode 100644 nouveau-1/nouveau_channel.c
- create mode 100644 nouveau-1/nouveau_channel.h
- create mode 100644 nouveau-1/nouveau_device.c
- create mode 100644 nouveau-1/nouveau_device.h
- create mode 100644 nouveau-1/nouveau_drmif.h
- create mode 100644 nouveau-1/nouveau_grobj.c
- create mode 100644 nouveau-1/nouveau_grobj.h
- create mode 100644 nouveau-1/nouveau_notifier.c
- create mode 100644 nouveau-1/nouveau_notifier.h
- create mode 100644 nouveau-1/nouveau_private.h
- create mode 100644 nouveau-1/nouveau_pushbuf.c
- create mode 100644 nouveau-1/nouveau_pushbuf.h
- create mode 100644 nouveau-1/nouveau_reloc.c
- create mode 100644 nouveau-1/nouveau_reloc.h
- create mode 100644 nouveau-1/nouveau_resource.c
- create mode 100644 nouveau-1/nouveau_resource.h
- create mode 100644 nouveau-1/nv04_pushbuf.h
- create mode 100644 nouveau-1/nvc0_pushbuf.h
- create mode 100644 nouveau/libdrm_nouveau2.pc.in
-
-diff --git a/Makefile.am b/Makefile.am
-index 3cb516c..5efc53b 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -34,7 +34,7 @@ INTEL_SUBDIR = intel
+diff -up libdrm-2.4.65/configure.ac.nouveau libdrm-2.4.65/configure.ac
+--- libdrm-2.4.65/configure.ac.nouveau	2015-09-16 22:59:08.000000000 +1000
++++ libdrm-2.4.65/configure.ac	2015-11-16 13:09:10.715380508 +1000
+@@ -487,7 +487,9 @@ AC_CONFIG_FILES([
+ 	amdgpu/Makefile
+ 	amdgpu/libdrm_amdgpu.pc
+ 	nouveau/Makefile
+-	nouveau/libdrm_nouveau.pc
++	nouveau/libdrm_nouveau2.pc
++	nouveau-1/Makefile
++	nouveau-1/libdrm_nouveau.pc
+ 	omap/Makefile
+ 	omap/libdrm_omap.pc
+ 	exynos/Makefile
+diff -up libdrm-2.4.65/Makefile.am.nouveau libdrm-2.4.65/Makefile.am
+--- libdrm-2.4.65/Makefile.am.nouveau	2015-08-25 03:42:59.000000000 +1000
++++ libdrm-2.4.65/Makefile.am	2015-11-16 13:09:10.716380508 +1000
+@@ -51,7 +51,7 @@ INTEL_SUBDIR = intel
  endif
  
  if HAVE_NOUVEAU
@@ -74,27 +24,24 @@ index 3cb516c..5efc53b 100644
  endif
  
  if HAVE_RADEON
-diff --git a/configure.ac b/configure.ac
-index 8afee83..9197eef 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -422,8 +422,10 @@ AC_CONFIG_FILES([
- 	intel/libdrm_intel.pc
- 	radeon/Makefile
- 	radeon/libdrm_radeon.pc
-+	nouveau-1/Makefile
-+	nouveau-1/libdrm_nouveau.pc
- 	nouveau/Makefile
--	nouveau/libdrm_nouveau.pc
-+	nouveau/libdrm_nouveau2.pc
- 	omap/Makefile
- 	omap/libdrm_omap.pc
- 	exynos/Makefile
-diff --git a/nouveau-1/Makefile.am b/nouveau-1/Makefile.am
-new file mode 100644
-index 0000000..8b89916
---- /dev/null
-+++ b/nouveau-1/Makefile.am
+diff -up libdrm-2.4.65/nouveau-1/libdrm_nouveau.pc.in.nouveau libdrm-2.4.65/nouveau-1/libdrm_nouveau.pc.in
+--- libdrm-2.4.65/nouveau-1/libdrm_nouveau.pc.in.nouveau	2015-11-16 13:09:10.747380507 +1000
++++ libdrm-2.4.65/nouveau-1/libdrm_nouveau.pc.in	2015-11-16 13:09:10.747380507 +1000
+@@ -0,0 +1,11 @@
++prefix=@prefix@
++exec_prefix=@exec_prefix@
++libdir=@libdir@
++includedir=@includedir@
++
++Name: libdrm_nouveau
++Description: Userspace interface to nouveau kernel DRM services
++Version: 0.6
++Libs: -L${libdir} -ldrm_nouveau
++Cflags: -I${includedir} -I${includedir}/libdrm -I${includedir}/nouveau
++Requires.private: libdrm
+diff -up libdrm-2.4.65/nouveau-1/Makefile.am.nouveau libdrm-2.4.65/nouveau-1/Makefile.am
+--- libdrm-2.4.65/nouveau-1/Makefile.am.nouveau	2015-11-16 13:09:10.760380507 +1000
++++ libdrm-2.4.65/nouveau-1/Makefile.am	2015-11-16 13:09:10.760380507 +1000
 @@ -0,0 +1,43 @@
 +AM_CFLAGS = \
 +	$(WARN_CFLAGS) \
@@ -139,28 +86,9 @@ index 0000000..8b89916
 +
 +pkgconfigdir = @pkgconfigdir@
 +pkgconfig_DATA = libdrm_nouveau.pc
-diff --git a/nouveau-1/libdrm_nouveau.pc.in b/nouveau-1/libdrm_nouveau.pc.in
-new file mode 100644
-index 0000000..c78a28a
---- /dev/null
-+++ b/nouveau-1/libdrm_nouveau.pc.in
-@@ -0,0 +1,11 @@
-+prefix=@prefix@
-+exec_prefix=@exec_prefix@
-+libdir=@libdir@
-+includedir=@includedir@
-+
-+Name: libdrm_nouveau
-+Description: Userspace interface to nouveau kernel DRM services
-+Version: 0.6
-+Libs: -L${libdir} -ldrm_nouveau
-+Cflags: -I${includedir} -I${includedir}/libdrm -I${includedir}/nouveau
-+Requires.private: libdrm
-diff --git a/nouveau-1/nouveau_bo.c b/nouveau-1/nouveau_bo.c
-new file mode 100644
-index 0000000..9cb1410
---- /dev/null
-+++ b/nouveau-1/nouveau_bo.c
+diff -up libdrm-2.4.65/nouveau-1/nouveau_bo.c.nouveau libdrm-2.4.65/nouveau-1/nouveau_bo.c
+--- libdrm-2.4.65/nouveau-1/nouveau_bo.c.nouveau	2015-11-16 13:09:10.768380507 +1000
++++ libdrm-2.4.65/nouveau-1/nouveau_bo.c	2015-11-16 13:09:10.768380507 +1000
 @@ -0,0 +1,549 @@
 +/*
 + * Copyright 2007 Nouveau Project
@@ -711,11 +639,9 @@ index 0000000..9cb1410
 +	pbbo->presumed.valid = 1;
 +	return pbbo;
 +}
-diff --git a/nouveau-1/nouveau_bo.h b/nouveau-1/nouveau_bo.h
-new file mode 100644
-index 0000000..3a1f2d4
---- /dev/null
-+++ b/nouveau-1/nouveau_bo.h
+diff -up libdrm-2.4.65/nouveau-1/nouveau_bo.h.nouveau libdrm-2.4.65/nouveau-1/nouveau_bo.h
+--- libdrm-2.4.65/nouveau-1/nouveau_bo.h.nouveau	2015-11-16 13:09:10.776380508 +1000
++++ libdrm-2.4.65/nouveau-1/nouveau_bo.h	2015-11-16 13:09:10.776380508 +1000
 @@ -0,0 +1,104 @@
 +/*
 + * Copyright 2007 Nouveau Project
@@ -821,11 +747,9 @@ index 0000000..3a1f2d4
 +nouveau_bo_pending(struct nouveau_bo *);
 +
 +#endif
-diff --git a/nouveau-1/nouveau_channel.c b/nouveau-1/nouveau_channel.c
-new file mode 100644
-index 0000000..96fa03b
---- /dev/null
-+++ b/nouveau-1/nouveau_channel.c
+diff -up libdrm-2.4.65/nouveau-1/nouveau_channel.c.nouveau libdrm-2.4.65/nouveau-1/nouveau_channel.c
+--- libdrm-2.4.65/nouveau-1/nouveau_channel.c.nouveau	2015-11-16 13:09:10.784380508 +1000
++++ libdrm-2.4.65/nouveau-1/nouveau_channel.c	2015-11-16 13:09:10.784380508 +1000
 @@ -0,0 +1,142 @@
 +/*
 + * Copyright 2007 Nouveau Project
@@ -969,11 +893,9 @@ index 0000000..96fa03b
 +}
 +
 +
-diff --git a/nouveau-1/nouveau_channel.h b/nouveau-1/nouveau_channel.h
-new file mode 100644
-index 0000000..d61a4c0
---- /dev/null
-+++ b/nouveau-1/nouveau_channel.h
+diff -up libdrm-2.4.65/nouveau-1/nouveau_channel.h.nouveau libdrm-2.4.65/nouveau-1/nouveau_channel.h
+--- libdrm-2.4.65/nouveau-1/nouveau_channel.h.nouveau	2015-11-16 13:09:10.792380508 +1000
++++ libdrm-2.4.65/nouveau-1/nouveau_channel.h	2015-11-16 13:09:10.792380508 +1000
 @@ -0,0 +1,57 @@
 +/*
 + * Copyright 2007 Nouveau Project
@@ -1032,11 +954,9 @@ index 0000000..d61a4c0
 +nouveau_channel_free(struct nouveau_channel **);
 +
 +#endif
-diff --git a/nouveau-1/nouveau_device.c b/nouveau-1/nouveau_device.c
-new file mode 100644
-index 0000000..425c5d2
---- /dev/null
-+++ b/nouveau-1/nouveau_device.c
+diff -up libdrm-2.4.65/nouveau-1/nouveau_device.c.nouveau libdrm-2.4.65/nouveau-1/nouveau_device.c
+--- libdrm-2.4.65/nouveau-1/nouveau_device.c.nouveau	2015-11-16 13:09:10.801380508 +1000
++++ libdrm-2.4.65/nouveau-1/nouveau_device.c	2015-11-16 13:09:10.801380508 +1000
 @@ -0,0 +1,198 @@
 +/*
 + * Copyright 2007 Nouveau Project
@@ -1236,11 +1156,9 @@ index 0000000..425c5d2
 +	return 0;
 +}
 +
-diff --git a/nouveau-1/nouveau_device.h b/nouveau-1/nouveau_device.h
-new file mode 100644
-index 0000000..c0d9333
---- /dev/null
-+++ b/nouveau-1/nouveau_device.h
+diff -up libdrm-2.4.65/nouveau-1/nouveau_device.h.nouveau libdrm-2.4.65/nouveau-1/nouveau_device.h
+--- libdrm-2.4.65/nouveau-1/nouveau_device.h.nouveau	2015-11-16 13:09:10.810380507 +1000
++++ libdrm-2.4.65/nouveau-1/nouveau_device.h	2015-11-16 13:09:10.810380507 +1000
 @@ -0,0 +1,33 @@
 +/*
 + * Copyright 2007 Nouveau Project
@@ -1275,11 +1193,9 @@ index 0000000..c0d9333
 +};
 +
 +#endif
-diff --git a/nouveau-1/nouveau_drmif.h b/nouveau-1/nouveau_drmif.h
-new file mode 100644
-index 0000000..ec226a2
---- /dev/null
-+++ b/nouveau-1/nouveau_drmif.h
+diff -up libdrm-2.4.65/nouveau-1/nouveau_drmif.h.nouveau libdrm-2.4.65/nouveau-1/nouveau_drmif.h
+--- libdrm-2.4.65/nouveau-1/nouveau_drmif.h.nouveau	2015-11-16 13:09:10.818380506 +1000
++++ libdrm-2.4.65/nouveau-1/nouveau_drmif.h	2015-11-16 13:09:10.818380507 +1000
 @@ -0,0 +1,58 @@
 +/*
 + * Copyright 2008 Nouveau Project
@@ -1339,11 +1255,9 @@ index 0000000..ec226a2
 +nouveau_device_set_param(struct nouveau_device *, uint64_t param, uint64_t val);
 +
 +#endif
-diff --git a/nouveau-1/nouveau_grobj.c b/nouveau-1/nouveau_grobj.c
-new file mode 100644
-index 0000000..36344b9
---- /dev/null
-+++ b/nouveau-1/nouveau_grobj.c
+diff -up libdrm-2.4.65/nouveau-1/nouveau_grobj.c.nouveau libdrm-2.4.65/nouveau-1/nouveau_grobj.c
+--- libdrm-2.4.65/nouveau-1/nouveau_grobj.c.nouveau	2015-11-16 13:09:10.827380506 +1000
++++ libdrm-2.4.65/nouveau-1/nouveau_grobj.c	2015-11-16 13:09:10.827380506 +1000
 @@ -0,0 +1,148 @@
 +/*
 + * Copyright 2007 Nouveau Project
@@ -1493,11 +1407,9 @@ index 0000000..36344b9
 +	}
 +}
 +
-diff --git a/nouveau-1/nouveau_grobj.h b/nouveau-1/nouveau_grobj.h
-new file mode 100644
-index 0000000..51ac7d9
---- /dev/null
-+++ b/nouveau-1/nouveau_grobj.h
+diff -up libdrm-2.4.65/nouveau-1/nouveau_grobj.h.nouveau libdrm-2.4.65/nouveau-1/nouveau_grobj.h
+--- libdrm-2.4.65/nouveau-1/nouveau_grobj.h.nouveau	2015-11-16 13:09:10.835380506 +1000
++++ libdrm-2.4.65/nouveau-1/nouveau_grobj.h	2015-11-16 13:09:10.835380506 +1000
 @@ -0,0 +1,48 @@
 +/*
 + * Copyright 2007 Nouveau Project
@@ -1547,11 +1459,9 @@ index 0000000..51ac7d9
 +void nouveau_grobj_autobind(struct nouveau_grobj *);
 +
 +#endif
-diff --git a/nouveau-1/nouveau_notifier.c b/nouveau-1/nouveau_notifier.c
-new file mode 100644
-index 0000000..513fa63
---- /dev/null
-+++ b/nouveau-1/nouveau_notifier.c
+diff -up libdrm-2.4.65/nouveau-1/nouveau_notifier.c.nouveau libdrm-2.4.65/nouveau-1/nouveau_notifier.c
+--- libdrm-2.4.65/nouveau-1/nouveau_notifier.c.nouveau	2015-11-16 13:09:10.843380507 +1000
++++ libdrm-2.4.65/nouveau-1/nouveau_notifier.c	2015-11-16 13:09:10.843380507 +1000
 @@ -0,0 +1,148 @@
 +/*
 + * Copyright 2007 Nouveau Project
@@ -1701,11 +1611,9 @@ index 0000000..513fa63
 +	return -EBUSY;
 +}
 +
-diff --git a/nouveau-1/nouveau_notifier.h b/nouveau-1/nouveau_notifier.h
-new file mode 100644
-index 0000000..dbc6a3b
---- /dev/null
-+++ b/nouveau-1/nouveau_notifier.h
+diff -up libdrm-2.4.65/nouveau-1/nouveau_notifier.h.nouveau libdrm-2.4.65/nouveau-1/nouveau_notifier.h
+--- libdrm-2.4.65/nouveau-1/nouveau_notifier.h.nouveau	2015-11-16 13:09:10.852380506 +1000
++++ libdrm-2.4.65/nouveau-1/nouveau_notifier.h	2015-11-16 13:09:10.852380506 +1000
 @@ -0,0 +1,63 @@
 +/*
 + * Copyright 2007 Nouveau Project
@@ -1770,11 +1678,9 @@ index 0000000..dbc6a3b
 +			     double timeout);
 +
 +#endif
-diff --git a/nouveau-1/nouveau_private.h b/nouveau-1/nouveau_private.h
-new file mode 100644
-index 0000000..124fe87
---- /dev/null
-+++ b/nouveau-1/nouveau_private.h
+diff -up libdrm-2.4.65/nouveau-1/nouveau_private.h.nouveau libdrm-2.4.65/nouveau-1/nouveau_private.h
+--- libdrm-2.4.65/nouveau-1/nouveau_private.h.nouveau	2015-11-16 13:09:10.860380506 +1000
++++ libdrm-2.4.65/nouveau-1/nouveau_private.h	2015-11-16 13:09:10.860380506 +1000
 @@ -0,0 +1,136 @@
 +/*
 + * Copyright 2007 Nouveau Project
@@ -1912,11 +1818,9 @@ index 0000000..124fe87
 +nouveau_bo_emit_buffer(struct nouveau_channel *, struct nouveau_bo *);
 +
 +#endif
-diff --git a/nouveau-1/nouveau_pushbuf.c b/nouveau-1/nouveau_pushbuf.c
-new file mode 100644
-index 0000000..59f60d9
---- /dev/null
-+++ b/nouveau-1/nouveau_pushbuf.c
+diff -up libdrm-2.4.65/nouveau-1/nouveau_pushbuf.c.nouveau libdrm-2.4.65/nouveau-1/nouveau_pushbuf.c
+--- libdrm-2.4.65/nouveau-1/nouveau_pushbuf.c.nouveau	2015-11-16 13:09:10.868380507 +1000
++++ libdrm-2.4.65/nouveau-1/nouveau_pushbuf.c	2015-11-16 13:09:10.868380507 +1000
 @@ -0,0 +1,344 @@
 +/*
 + * Copyright 2007 Nouveau Project
@@ -2262,11 +2166,9 @@ index 0000000..59f60d9
 +	return 0;
 +}
 +
-diff --git a/nouveau-1/nouveau_pushbuf.h b/nouveau-1/nouveau_pushbuf.h
-new file mode 100644
-index 0000000..2a98789
---- /dev/null
-+++ b/nouveau-1/nouveau_pushbuf.h
+diff -up libdrm-2.4.65/nouveau-1/nouveau_pushbuf.h.nouveau libdrm-2.4.65/nouveau-1/nouveau_pushbuf.h
+--- libdrm-2.4.65/nouveau-1/nouveau_pushbuf.h.nouveau	2015-11-16 13:09:10.877380506 +1000
++++ libdrm-2.4.65/nouveau-1/nouveau_pushbuf.h	2015-11-16 13:09:10.877380506 +1000
 @@ -0,0 +1,162 @@
 +/*
 + * Copyright 2007 Nouveau Project
@@ -2430,11 +2332,9 @@ index 0000000..2a98789
 +}
 +
 +#endif
-diff --git a/nouveau-1/nouveau_reloc.c b/nouveau-1/nouveau_reloc.c
-new file mode 100644
-index 0000000..cd219db
---- /dev/null
-+++ b/nouveau-1/nouveau_reloc.c
+diff -up libdrm-2.4.65/nouveau-1/nouveau_reloc.c.nouveau libdrm-2.4.65/nouveau-1/nouveau_reloc.c
+--- libdrm-2.4.65/nouveau-1/nouveau_reloc.c.nouveau	2015-11-16 13:09:10.885380507 +1000
++++ libdrm-2.4.65/nouveau-1/nouveau_reloc.c	2015-11-16 13:09:10.885380507 +1000
 @@ -0,0 +1,154 @@
 +/*
 + * Copyright 2010 Nouveau Project
@@ -2590,11 +2490,9 @@ index 0000000..cd219db
 +	return 0;
 +}
 +
-diff --git a/nouveau-1/nouveau_reloc.h b/nouveau-1/nouveau_reloc.h
-new file mode 100644
-index 0000000..24ddb52
---- /dev/null
-+++ b/nouveau-1/nouveau_reloc.h
+diff -up libdrm-2.4.65/nouveau-1/nouveau_reloc.h.nouveau libdrm-2.4.65/nouveau-1/nouveau_reloc.h
+--- libdrm-2.4.65/nouveau-1/nouveau_reloc.h.nouveau	2015-11-16 13:09:10.893380507 +1000
++++ libdrm-2.4.65/nouveau-1/nouveau_reloc.h	2015-11-16 13:09:10.893380507 +1000
 @@ -0,0 +1,32 @@
 +/*
 + * Copyright 2010 Nouveau Project
@@ -2628,11 +2526,9 @@ index 0000000..24ddb52
 +		   uint32_t flags, uint32_t vor, uint32_t tor);
 +
 +#endif
-diff --git a/nouveau-1/nouveau_resource.c b/nouveau-1/nouveau_resource.c
-new file mode 100644
-index 0000000..7acaf7d
---- /dev/null
-+++ b/nouveau-1/nouveau_resource.c
+diff -up libdrm-2.4.65/nouveau-1/nouveau_resource.c.nouveau libdrm-2.4.65/nouveau-1/nouveau_resource.c
+--- libdrm-2.4.65/nouveau-1/nouveau_resource.c.nouveau	2015-11-16 13:09:10.901380507 +1000
++++ libdrm-2.4.65/nouveau-1/nouveau_resource.c	2015-11-16 13:09:10.901380507 +1000
 @@ -0,0 +1,124 @@
 +/*
 + * Copyright 2007 Nouveau Project
@@ -2758,11 +2654,9 @@ index 0000000..7acaf7d
 +	}
 +	
 +}
-diff --git a/nouveau-1/nouveau_resource.h b/nouveau-1/nouveau_resource.h
-new file mode 100644
-index 0000000..b760dfb
---- /dev/null
-+++ b/nouveau-1/nouveau_resource.h
+diff -up libdrm-2.4.65/nouveau-1/nouveau_resource.h.nouveau libdrm-2.4.65/nouveau-1/nouveau_resource.h
+--- libdrm-2.4.65/nouveau-1/nouveau_resource.h.nouveau	2015-11-16 13:09:10.910380507 +1000
++++ libdrm-2.4.65/nouveau-1/nouveau_resource.h	2015-11-16 13:09:10.910380507 +1000
 @@ -0,0 +1,51 @@
 +/*
 + * Copyright 2007 Nouveau Project
@@ -2815,11 +2709,9 @@ index 0000000..b760dfb
 +nouveau_resource_free(struct nouveau_resource **);
 +
 +#endif
-diff --git a/nouveau-1/nv04_pushbuf.h b/nouveau-1/nv04_pushbuf.h
-new file mode 100644
-index 0000000..586b284
---- /dev/null
-+++ b/nouveau-1/nv04_pushbuf.h
+diff -up libdrm-2.4.65/nouveau-1/nv04_pushbuf.h.nouveau libdrm-2.4.65/nouveau-1/nv04_pushbuf.h
+--- libdrm-2.4.65/nouveau-1/nv04_pushbuf.h.nouveau	2015-11-16 13:09:10.919380506 +1000
++++ libdrm-2.4.65/nouveau-1/nv04_pushbuf.h	2015-11-16 13:09:10.919380506 +1000
 @@ -0,0 +1,66 @@
 +/*
 + * Copyright 2007 Nouveau Project
@@ -2887,11 +2779,9 @@ index 0000000..586b284
 +}
 +
 +#endif
-diff --git a/nouveau-1/nvc0_pushbuf.h b/nouveau-1/nvc0_pushbuf.h
-new file mode 100644
-index 0000000..40dc7e6
---- /dev/null
-+++ b/nouveau-1/nvc0_pushbuf.h
+diff -up libdrm-2.4.65/nouveau-1/nvc0_pushbuf.h.nouveau libdrm-2.4.65/nouveau-1/nvc0_pushbuf.h
+--- libdrm-2.4.65/nouveau-1/nvc0_pushbuf.h.nouveau	2015-11-16 13:09:10.927380506 +1000
++++ libdrm-2.4.65/nouveau-1/nvc0_pushbuf.h	2015-11-16 13:09:10.927380506 +1000
 @@ -0,0 +1,92 @@
 +/*
 + * Copyright 2010 Nouveau Project
@@ -2985,43 +2875,9 @@ index 0000000..40dc7e6
 +}
 +
 +#endif
-diff --git a/nouveau/Makefile.am b/nouveau/Makefile.am
-index 7543e43..51f3e0e 100644
---- a/nouveau/Makefile.am
-+++ b/nouveau/Makefile.am
-@@ -9,17 +9,19 @@ AM_CFLAGS = \
- 	-I$(top_srcdir)/include/drm \
- 	-DDEBUG
- 
--libdrm_nouveau_la_LTLIBRARIES = libdrm_nouveau.la
--libdrm_nouveau_ladir = $(libdir)
--libdrm_nouveau_la_LDFLAGS = -version-number 2:0:0 -no-undefined
--libdrm_nouveau_la_LIBADD = ../libdrm.la @PTHREADSTUBS_LIBS@
--
--libdrm_nouveau_la_SOURCES = $(LIBDRM_NOUVEAU_FILES)
-+libdrm_nouveau2_la_LTLIBRARIES = libdrm_nouveau2.la
-+libdrm_nouveau2_ladir = $(libdir)
-+libdrm_nouveau2_la_LDFLAGS = -version-number 2:0:0 -no-undefined
-+libdrm_nouveau2_la_LIBADD = ../libdrm.la @PTHREADSTUBS_LIBS@
-+libdrm_nouveau2_la_SOURCES = nouveau.c \
-+			     pushbuf.c \
-+			     bufctx.c \
-+			     abi16.c \
-+			     private.h
- 
- libdrm_nouveauincludedir = ${includedir}/libdrm
- libdrm_nouveauinclude_HEADERS = $(LIBDRM_NOUVEAU_H_FILES)
- 
- pkgconfigdir = @pkgconfigdir@
--pkgconfig_DATA = libdrm_nouveau.pc
--
- EXTRA_DIST = Android.mk
-+pkgconfig_DATA = libdrm_nouveau2.pc
-diff --git a/nouveau/libdrm_nouveau2.pc.in b/nouveau/libdrm_nouveau2.pc.in
-new file mode 100644
-index 0000000..36971e8
---- /dev/null
-+++ b/nouveau/libdrm_nouveau2.pc.in
+diff -up libdrm-2.4.65/nouveau/libdrm_nouveau2.pc.in.nouveau libdrm-2.4.65/nouveau/libdrm_nouveau2.pc.in
+--- libdrm-2.4.65/nouveau/libdrm_nouveau2.pc.in.nouveau	2015-11-16 13:09:10.935380506 +1000
++++ libdrm-2.4.65/nouveau/libdrm_nouveau2.pc.in	2015-11-16 13:09:10.935380506 +1000
 @@ -0,0 +1,11 @@
 +prefix=@prefix@
 +exec_prefix=@exec_prefix@
@@ -3034,6 +2890,33 @@ index 0000000..36971e8
 +Libs: -L${libdir} -ldrm_nouveau2
 +Cflags: -I${includedir} -I${includedir}/libdrm
 +Requires.private: libdrm
--- 
-1.8.3.1
-
+diff -up libdrm-2.4.65/nouveau/Makefile.am.nouveau libdrm-2.4.65/nouveau/Makefile.am
+--- libdrm-2.4.65/nouveau/Makefile.am.nouveau	2015-05-05 01:47:43.000000000 +1000
++++ libdrm-2.4.65/nouveau/Makefile.am	2015-11-16 13:09:48.103380471 +1000
+@@ -7,18 +7,18 @@ AM_CFLAGS = \
+ 	-I$(top_srcdir)/include/drm \
+ 	-DDEBUG
+ 
+-libdrm_nouveau_la_LTLIBRARIES = libdrm_nouveau.la
+-libdrm_nouveau_ladir = $(libdir)
+-libdrm_nouveau_la_LDFLAGS = -version-number 2:0:0 -no-undefined
+-libdrm_nouveau_la_LIBADD = ../libdrm.la @PTHREADSTUBS_LIBS@
++libdrm_nouveau2_la_LTLIBRARIES = libdrm_nouveau2.la
++libdrm_nouveau2_ladir = $(libdir)
++libdrm_nouveau2_la_LDFLAGS = -version-number 2:0:0 -no-undefined
++libdrm_nouveau2_la_LIBADD = ../libdrm.la @PTHREADSTUBS_LIBS@
+ 
+-libdrm_nouveau_la_SOURCES = $(LIBDRM_NOUVEAU_FILES)
++libdrm_nouveau2_la_SOURCES = $(LIBDRM_NOUVEAU_FILES)
+ 
+-libdrm_nouveauincludedir = ${includedir}/libdrm
+-libdrm_nouveauinclude_HEADERS = $(LIBDRM_NOUVEAU_H_FILES)
++libdrm_nouveau2includedir = ${includedir}/libdrm
++libdrm_nouveau2include_HEADERS = $(LIBDRM_NOUVEAU_H_FILES)
+ 
+ pkgconfigdir = @pkgconfigdir@
+-pkgconfig_DATA = libdrm_nouveau.pc
++pkgconfig_DATA = libdrm_nouveau2.pc
+ 
+ TESTS = nouveau-symbol-check
+ EXTRA_DIST = Android.mk $(TESTS)

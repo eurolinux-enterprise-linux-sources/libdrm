@@ -2,7 +2,7 @@
 
 Summary: Direct Rendering Manager runtime library
 Name: libdrm
-Version: 2.4.59
+Version: 2.4.65
 Release: 2%{?dist}
 License: MIT
 Group: System Environment/Libraries
@@ -24,6 +24,8 @@ BuildRequires: libudev-devel
 BuildRequires: libatomic_ops-devel
 BuildRequires: libpciaccess-devel
 
+BuildRequires: xorg-x11-util-macros
+
 Source2: 91-drm-modeset.rules
 
 # from git
@@ -36,8 +38,8 @@ Patch4: libdrm-2.4.0-no-bc.patch
 Patch5: libdrm-2.4.25-check-programs.patch
 # fix plymouth
 Patch8: libdrm-2.4.37-nouveau-1.patch
-# covscan issue
-Patch9: 0001-nouveau-fix-unlock-nouveau_bo_name_ref.patch
+# skl ids
+Patch9: 0001-intel-Add-SKL-GT4-PCI-IDs.patch
 
 %description
 Direct Rendering Manager runtime library
@@ -72,7 +74,7 @@ rm -f nouveau/libdrm_nouveau.pc.in
 %patch4 -p1 -b .no-bc
 %patch5 -p1 -b .check
 %patch8 -p1 -b .nouveau
-%patch9 -p1 -b .nouveau_lock
+%patch9 -p1 -b .skl
 
 %build
 autoreconf -v --install || exit 1
@@ -82,9 +84,11 @@ autoreconf -v --install || exit 1
 %endif
 	--enable-udev --disable-libkms --disable-manpages
 make %{?_smp_mflags}
+%if !0%{?rhel}
 pushd tests
 make %{?smp_mflags} `make check-programs`
 popd
+%endif
 
 %install
 make install DESTDIR=$RPM_BUILD_ROOT
@@ -123,6 +127,8 @@ done
 %{_libdir}/libdrm_omap.so.1
 %{_libdir}/libdrm_omap.so.1.0.0
 %endif
+%{_libdir}/libdrm_amdgpu.so.1
+%{_libdir}/libdrm_amdgpu.so.1.0.0
 %{_libdir}/libdrm_radeon.so.1
 %{_libdir}/libdrm_radeon.so.1.0.1
 %{_libdir}/libdrm_nouveau.so.1
@@ -169,6 +175,7 @@ done
 %{_includedir}/libdrm/omap_drmif.h
 %{_includedir}/omap/
 %endif
+%{_includedir}/libdrm/amdgpu.h
 %{_includedir}/libdrm/radeon_bo.h
 %{_includedir}/libdrm/radeon_bo_gem.h
 %{_includedir}/libdrm/radeon_bo_int.h
@@ -190,6 +197,7 @@ done
 %ifarch %{arm}
 %{_libdir}/libdrm_omap.so
 %endif
+%{_libdir}/libdrm_amdgpu.so
 %{_libdir}/libdrm_radeon.so
 %{_libdir}/libdrm_nouveau.so
 %{_libdir}/libdrm_nouveau2.so
@@ -200,11 +208,18 @@ done
 %ifarch %{arm}
 %{_libdir}/pkgconfig/libdrm_omap.pc
 %endif
+%{_libdir}/pkgconfig/libdrm_amdgpu.pc
 %{_libdir}/pkgconfig/libdrm_radeon.pc
 %{_libdir}/pkgconfig/libdrm_nouveau.pc
 %{_libdir}/pkgconfig/libdrm_nouveau2.pc
 
 %changelog
+* Thu Feb 04 2016 Adam Jackson <ajax@redhat.com> - 2.4.65-2
+- Add more Skylake PCI IDs
+
+* Mon Nov 16 2015 Dave Airlie <airlied@redhat.com> 2.4.65-1
+- libdrm 2.4.65
+
 * Mon Feb 16 2015 Jérôme Glisse <jglisse@redhat.com> 2.4.59-2
 - fix covscan issue
 

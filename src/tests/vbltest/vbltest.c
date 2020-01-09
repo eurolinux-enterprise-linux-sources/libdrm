@@ -104,8 +104,9 @@ static void usage(char *name)
 
 int main(int argc, char **argv)
 {
-	int i, c, fd, ret;
-	char *modules[] = { "i915", "radeon", "nouveau", "vmwgfx", "exynos", "omapdrm", "tilcdc", "msm", "tegra" };
+	unsigned i;
+	int c, fd, ret;
+	const char *modules[] = { "i915", "radeon", "nouveau", "vmwgfx", "exynos", "omapdrm", "tilcdc", "msm", "tegra", "imx-drm" , "rockchip" };
 	drmVBlank vbl;
 	drmEventContext evctx;
 	struct vbl_info handler_info;
@@ -176,7 +177,6 @@ int main(int argc, char **argv)
 	while (1) {
 		struct timeval timeout = { .tv_sec = 3, .tv_usec = 0 };
 		fd_set fds;
-		int ret;
 
 		FD_ZERO(&fds);
 		FD_SET(0, &fds);
