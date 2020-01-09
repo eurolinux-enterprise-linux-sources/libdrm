@@ -41,6 +41,10 @@
 #include <sys/ioctl.h>
 #include <stdio.h>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "xf86drmMode.h"
 #include "xf86drm.h"
 #include <drm.h>
@@ -48,6 +52,16 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <errno.h>
+
+#ifdef HAVE_VALGRIND
+#include <valgrind.h>
+#include <memcheck.h>
+#define VG(x) x
+#else
+#define VG(x)
+#endif
+
+#define VG_CLEAR(s) VG(memset(&s, 0, sizeof(s)))
 
 #define U642VOID(x) ((void *)(unsigned long)(x))
 #define VOID2U64(x) ((uint64_t)(unsigned long)(x))
@@ -245,6 +259,7 @@ int drmModeAddFB(int fd, uint32_t width, uint32_t height, uint8_t depth,
 	struct drm_mode_fb_cmd f;
 	int ret;
 
+	VG_CLEAR(f);
 	f.width  = width;
 	f.height = height;
 	f.pitch  = pitch;
@@ -335,6 +350,7 @@ drmModeCrtcPtr drmModeGetCrtc(int fd, uint32_t crtcId)
 	struct drm_mode_crtc crtc;
 	drmModeCrtcPtr r;
 
+	VG_CLEAR(crtc);
 	crtc.crtc_id = crtcId;
 
 	if (drmIoctl(fd, DRM_IOCTL_MODE_GETCRTC, &crtc))
@@ -368,6 +384,7 @@ int drmModeSetCrtc(int fd, uint32_t crtcId, uint32_t bufferId,
 {
 	struct drm_mode_crtc crtc;
 
+	VG_CLEAR(crtc);
 	crtc.x             = x;
 	crtc.y             = y;
 	crtc.crtc_id       = crtcId;
@@ -400,6 +417,21 @@ int drmModeSetCursor(int fd, uint32_t crtcId, uint32_t bo_handle, uint32_t width
 	return DRM_IOCTL(fd, DRM_IOCTL_MODE_CURSOR, &arg);
 }
 
+int drmModeSetCursor2(int fd, uint32_t crtcId, uint32_t bo_handle, uint32_t width, uint32_t height, int32_t hot_x, int32_t hot_y)
+{
+	struct drm_mode_cursor2 arg;
+
+	arg.flags = DRM_MODE_CURSOR_BO;
+	arg.crtc_id = crtcId;
+	arg.width = width;
+	arg.height = height;
+	arg.handle = bo_handle;
+	arg.hot_x = hot_x;
+	arg.hot_y = hot_y;
+
+	return DRM_IOCTL(fd, DRM_IOCTL_MODE_CURSOR2, &arg);
+}
+
 int drmModeMoveCursor(int fd, uint32_t crtcId, int x, int y)
 {
 	struct drm_mode_cursor arg;
@@ -421,6 +453,7 @@ drmModeEncoderPtr drmModeGetEncoder(int fd, uint32_t encoder_id)
 	drmModeEncoderPtr r = NULL;
 
 	enc.encoder_id = encoder_id;
+	enc.crtc_id = 0;
 	enc.encoder_type = 0;
 	enc.possible_crtcs = 0;
 	enc.possible_clones = 0;
@@ -565,6 +598,7 @@ drmModePropertyPtr drmModeGetProperty(int fd, uint32_t property_id)
 	struct drm_mode_get_property prop;
 	drmModePropertyPtr r;
 
+	VG_CLEAR(prop);
 	prop.prop_id = property_id;
 	prop.count_enum_blobs = 0;
 	prop.count_values = 0;

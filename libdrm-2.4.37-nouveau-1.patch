@@ -382,7 +382,7 @@ index 0000000..d6bb22d
 +nouveau_bo_new(struct nouveau_device *dev, uint32_t flags, int align,
 +	       int size, struct nouveau_bo **bo)
 +{
-+	return nouveau_bo_new_tile(dev, flags, align, size, 0, 0, bo);
++	return nouveau_bo_new_tile(dev, flags, align, size, 0, NOUVEAU_BO_TILE_SCANOUT, bo);
 +}
 +
 +int

@@ -807,6 +807,7 @@ struct drm_radeon_gem_create {
 #define RADEON_TILING_MACRO				0x1
 #define RADEON_TILING_MICRO				0x2
 #define RADEON_TILING_SWAP_16BIT			0x4
+#define RADEON_TILING_R600_NO_SCANOUT                   RADEON_TILING_SWAP_16BIT
 #define RADEON_TILING_SWAP_32BIT			0x8
 /* this object requires a surface when mapped - i.e. front buffer */
 #define RADEON_TILING_SURFACE				0x10
@@ -979,6 +980,10 @@ struct drm_radeon_cs {
 #define RADEON_INFO_RING_WORKING	0x15
 /* SI tile mode array */
 #define RADEON_INFO_SI_TILE_MODE_ARRAY	0x16
+/* query if CP DMA is supported on the compute ring */
+#define RADEON_INFO_SI_CP_DMA_COMPUTE	0x17
+/* CIK macrotile mode array */
+#define RADEON_INFO_CIK_MACROTILE_MODE_ARRAY	0x18
 
 struct drm_radeon_info {
 	uint32_t		request;
@@ -1003,5 +1008,14 @@ struct drm_radeon_info {
 #define SI_TILE_MODE_DEPTH_STENCIL_2D_2AA	3
 #define SI_TILE_MODE_DEPTH_STENCIL_2D_4AA	3
 #define SI_TILE_MODE_DEPTH_STENCIL_2D_8AA	2
+
+#define CIK_TILE_MODE_COLOR_2D			14
+#define CIK_TILE_MODE_COLOR_2D_SCANOUT		10
+#define CIK_TILE_MODE_DEPTH_STENCIL_2D_TILESPLIT_64       0
+#define CIK_TILE_MODE_DEPTH_STENCIL_2D_TILESPLIT_128      1
+#define CIK_TILE_MODE_DEPTH_STENCIL_2D_TILESPLIT_256      2
+#define CIK_TILE_MODE_DEPTH_STENCIL_2D_TILESPLIT_512      3
+#define CIK_TILE_MODE_DEPTH_STENCIL_2D_TILESPLIT_ROW_SIZE 4
+#define CIK_TILE_MODE_DEPTH_STENCIL_1D		5
 
 #endif

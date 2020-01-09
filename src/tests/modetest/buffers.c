@@ -337,13 +337,13 @@ fill_smpte_yuv_packed(const struct yuv_info *yuv, unsigned char *mem,
 	for (y = 0; y < height * 6 / 9; ++y) {
 		for (x = 0; x < width; ++x)
 			y_mem[2*x] = colors_top[x * 7 / width].y;
-		y_mem += stride * 2;
+		y_mem += stride;
 	}
 
 	for (; y < height * 7 / 9; ++y) {
 		for (x = 0; x < width; ++x)
 			y_mem[2*x] = colors_middle[x * 7 / width].y;
-		y_mem += stride * 2;
+		y_mem += stride;
 	}
 
 	for (; y < height; ++y) {
@@ -354,7 +354,7 @@ fill_smpte_yuv_packed(const struct yuv_info *yuv, unsigned char *mem,
 						   / (width / 7) + 4].y;
 		for (; x < width; ++x)
 			y_mem[2*x] = colors_bottom[7].y;
-		y_mem += stride * 2;
+		y_mem += stride;
 	}
 
 	/* Chroma */
@@ -363,7 +363,7 @@ fill_smpte_yuv_packed(const struct yuv_info *yuv, unsigned char *mem,
 			c_mem[2*x+u] = colors_top[x * 7 / width].u;
 			c_mem[2*x+v] = colors_top[x * 7 / width].v;
 		}
-		c_mem += stride * 2;
+		c_mem += stride;
 	}
 
 	for (; y < height * 7 / 9; ++y) {
@@ -371,7 +371,7 @@ fill_smpte_yuv_packed(const struct yuv_info *yuv, unsigned char *mem,
 			c_mem[2*x+u] = colors_middle[x * 7 / width].u;
 			c_mem[2*x+v] = colors_middle[x * 7 / width].v;
 		}
-		c_mem += stride * 2;
+		c_mem += stride;
 	}
 
 	for (; y < height; ++y) {
@@ -389,7 +389,7 @@ fill_smpte_yuv_packed(const struct yuv_info *yuv, unsigned char *mem,
 			c_mem[2*x+u] = colors_bottom[7].u;
 			c_mem[2*x+v] = colors_bottom[7].v;
 		}
-		c_mem += stride * 2;
+		c_mem += stride;
 	}
 }
 
@@ -661,15 +661,32 @@ fill_smpte(const struct format_info *info, void *planes[3], unsigned int width,
 #define BLUE  0
 
 static void
-make_pwetty(void *data, int width, int height, int stride)
+make_pwetty(void *data, int width, int height, int stride, uint32_t format)
 {
 #ifdef HAVE_CAIRO
 	cairo_surface_t *surface;
 	cairo_t *cr;
 	int x, y;
+	cairo_format_t cairo_format;
+
+	/* we can ignore the order of R,G,B channels */
+	switch (format) {
+	case DRM_FORMAT_XRGB8888:
+	case DRM_FORMAT_ARGB8888:
+	case DRM_FORMAT_XBGR8888:
+	case DRM_FORMAT_ABGR8888:
+		cairo_format = CAIRO_FORMAT_ARGB32;
+		break;
+	case DRM_FORMAT_RGB565:
+	case DRM_FORMAT_BGR565:
+		cairo_format = CAIRO_FORMAT_RGB16_565;
+		break;
+	default:
+		return;
+	}
 
 	surface = cairo_image_surface_create_for_data(data,
-						      CAIRO_FORMAT_ARGB32,
+						      cairo_format,
 						      width, height,
 						      stride);
 	cr = cairo_create(surface);
@@ -779,6 +796,7 @@ fill_tiles_rgb16(const struct format_info *info, unsigned char *mem,
 		 unsigned int width, unsigned int height, unsigned int stride)
 {
 	const struct rgb_info *rgb = &info->rgb;
+	unsigned char *mem_base = mem;
 	unsigned int x, y;
 
 	for (y = 0; y < height; ++y) {
@@ -795,6 +813,8 @@ fill_tiles_rgb16(const struct format_info *info, unsigned char *mem,
 		}
 		mem += stride;
 	}
+
+	make_pwetty(mem_base, width, height, stride, info->format);
 }
 
 static void
@@ -842,7 +862,7 @@ fill_tiles_rgb32(const struct format_info *info, unsigned char *mem,
 		mem += stride;
 	}
 
-	make_pwetty(mem_base, width, height, stride);
+	make_pwetty(mem_base, width, height, stride, info->format);
 }
 
 static void
@@ -979,8 +999,8 @@ fill_pattern(unsigned int format, enum fill_pattern pattern, void *planes[3],
  */
 
 static struct kms_bo *
-allocate_buffer(struct kms_driver *kms,
-		int width, int height, int *stride)
+allocate_buffer(struct kms_driver *kms, unsigned int width, unsigned int height,
+		unsigned int *stride)
 {
 	struct kms_bo *bo;
 	unsigned bo_attribs[] = {
@@ -1014,15 +1034,33 @@ allocate_buffer(struct kms_driver *kms,
 
 struct kms_bo *
 create_test_buffer(struct kms_driver *kms, unsigned int format,
-		   int width, int height, int handles[4],
-		   int pitches[4], int offsets[4], enum fill_pattern pattern)
+		   unsigned int width, unsigned int height,
+		   unsigned int handles[4], unsigned int pitches[4],
+		   unsigned int offsets[4], enum fill_pattern pattern)
 {
+	unsigned int virtual_height;
 	struct kms_bo *bo;
-	int ret, stride;
-	void *planes[3];
+	void *planes[3] = { 0, };
 	void *virtual;
+	int ret;
 
-	bo = allocate_buffer(kms, width, height, &pitches[0]);
+	switch (format) {
+	case DRM_FORMAT_NV12:
+	case DRM_FORMAT_NV21:
+		virtual_height = height * 3 / 2;
+		break;
+
+	case DRM_FORMAT_NV16:
+	case DRM_FORMAT_NV61:
+		virtual_height = height * 2;
+		break;
+
+	default:
+		virtual_height = height;
+		break;
+	}
+
+	bo = allocate_buffer(kms, width, virtual_height, &pitches[0]);
 	if (!bo)
 		return NULL;
 
