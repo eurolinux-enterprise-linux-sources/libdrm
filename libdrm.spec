@@ -2,15 +2,15 @@
 
 Summary: Direct Rendering Manager runtime library
 Name: libdrm
-Version: 2.4.83
-Release: 2%{?dist}
+Version: 2.4.91
+Release: 3%{?dist}
 License: MIT
 Group: System Environment/Libraries
 URL: http://dri.sourceforge.net
 %if 0%{?gitdate}
 Source0: %{name}-%{gitdate}.tar.bz2
 %else
-Source0: http://dri.freedesktop.org/libdrm/%{name}-%{version}.tar.bz2
+Source0: https://dri.freedesktop.org/libdrm/%{name}-%{version}.tar.bz2
 %endif
 Source1: make-git-snapshot.sh
 
@@ -34,8 +34,6 @@ BuildRequires: xorg-x11-util-macros
 
 Source2: 91-drm-modeset.rules
 
-# backport from upstream master seems like it should be in here.
-Patch1: 0001-intel-Change-a-KBL-pci-id-to-GT2-from-GT1.5.patch
 # hardcode the 666 instead of 660 for device nodes
 Patch3: libdrm-make-dri-perms-okay.patch
 # remove backwards compat not needed on Fedora
@@ -43,8 +41,12 @@ Patch4: libdrm-2.4.0-no-bc.patch
 # make rule to print the list of test programs
 Patch5: libdrm-2.4.25-check-programs.patch
 
-#Backport some intel pci ids.
-Patch10: 0002-intel-Add-more-Coffeelake-PCI-IDs.patch
+# backport new intel pci-ids
+Patch10: 0001-intel-intel_chipset.h-Sync-Cannonlake-IDs.patch
+Patch11: 0001-Intel-Add-a-Kaby-Lake-PCI-ID.patch
+Patch12: 0001-intel-add-support-for-ICL-11.patch
+Patch13: 0001-intel-Introducing-Whiskey-Lake-platform.patch
+Patch14: 0001-intel-Introducing-Amber-Lake-platform.patch
 
 %description
 Direct Rendering Manager runtime library
@@ -69,12 +71,15 @@ Utility programs for the kernel DRM interface.  Will void your warranty.
 
 %prep
 %setup -q %{?gitdate:-n %{name}-%{gitdate}}
-%patch1 -p1 -b .intelfix
 %patch3 -p1 -b .forceperms
 %patch4 -p1 -b .no-bc
 %patch5 -p1 -b .check
 
-%patch10 -p1 -b .cfl
+%patch10 -p1
+%patch11 -p1
+%patch12 -p1
+%patch13 -p1
+%patch14 -p1
 
 %build
 autoreconf -v --install || exit 1
@@ -238,6 +243,12 @@ done
 %{_mandir}/man7/drm*.7*
 
 %changelog
+* Wed Aug 22 2018 Rob Clark <rclark@redhat.com> - 2.4.91-3
+- Add WHL, AML, etc PCI IDs
+
+* Tue Apr 24 2018 Adam Jackson <ajax@redhat.com> - 2.4.91-2
+- libdrm 2.4.91
+
 * Fri Jan 12 2018 Dave Airlie <airlied@redhat.com> - 2.4.83-2
 - Add some Coffeelake PCI IDs
 

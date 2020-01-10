@@ -1,0 +1,44 @@
+From 50426f3e177c383a2de1c22534171c12461164a3 Mon Sep 17 00:00:00 2001
+From: Matt Atwood <matthew.s.atwood@intel.com>
+Date: Tue, 24 Apr 2018 12:42:39 -0700
+Subject: [PATCH libdrm] Intel: Add a Kaby Lake PCI ID
+
+Based on kernel commit '672e314b21dc ("drm/i915/kbl: Add KBL GT2 sku")'
+
+v2: name change M -> ULX, add enumeration in KBL ULX
+v3: add entry to IS_KABYLAKE
+
+Signed-off-by: Matt Atwood <matthew.s.atwood@intel.com>
+Reviewed-by: Rodrigo Vivi <rodrigo.vivi@intel.com>
+Signed-off-by: Rodrigo Vivi <rodrigo.vivi@intel.com>
+---
+ intel/intel_chipset.h | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/intel/intel_chipset.h b/intel/intel_chipset.h
+index 01d250e8..ba2e3ac1 100644
+--- a/intel/intel_chipset.h
++++ b/intel/intel_chipset.h
+@@ -200,7 +200,8 @@
+ #define PCI_CHIP_KABYLAKE_ULT_GT2F	0x5921
+ #define PCI_CHIP_KABYLAKE_ULX_GT1_5	0x5915
+ #define PCI_CHIP_KABYLAKE_ULX_GT1	0x590E
+-#define PCI_CHIP_KABYLAKE_ULX_GT2	0x591E
++#define PCI_CHIP_KABYLAKE_ULX_GT2_0	0x591E
++#define PCI_CHIP_KABYLAKE_ULX_GT2_1	0x591C
+ #define PCI_CHIP_KABYLAKE_DT_GT2	0x5912
+ #define PCI_CHIP_KABYLAKE_M_GT2		0x5917
+ #define PCI_CHIP_KABYLAKE_DT_GT1	0x5902
+@@ -455,7 +456,8 @@
+ 
+ #define IS_KBL_GT2(devid)	((devid) == PCI_CHIP_KABYLAKE_ULT_GT2	|| \
+ 				 (devid) == PCI_CHIP_KABYLAKE_ULT_GT2F	|| \
+-				 (devid) == PCI_CHIP_KABYLAKE_ULX_GT2	|| \
++				 (devid) == PCI_CHIP_KABYLAKE_ULX_GT2_0	|| \
++				 (devid) == PCI_CHIP_KABYLAKE_ULX_GT2_1	|| \
+ 				 (devid) == PCI_CHIP_KABYLAKE_DT_GT2	|| \
+ 				 (devid) == PCI_CHIP_KABYLAKE_M_GT2	|| \
+ 				 (devid) == PCI_CHIP_KABYLAKE_HALO_GT2	|| \
+-- 
+2.17.1
+
