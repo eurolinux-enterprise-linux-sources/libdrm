@@ -1,0 +1,10 @@
+diff -up libdrm-2.4.67/tests/Makefile.am.check libdrm-2.4.67/tests/Makefile.am
+--- libdrm-2.4.67/tests/Makefile.am.check	2016-02-19 15:32:46.197712477 +1000
++++ libdrm-2.4.67/tests/Makefile.am	2016-02-19 15:33:33.300996618 +1000
+@@ -73,3 +73,6 @@ TESTS +=					\
+ endif
+ 
+ check_PROGRAMS += $(TESTS)
++
++check-programs:
++	@echo $(check_PROGRAMS)
