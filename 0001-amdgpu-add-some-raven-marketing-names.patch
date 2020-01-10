@@ -1,0 +1,32 @@
+From 6415bd3ced9d80137e30cb90837eb01932607882 Mon Sep 17 00:00:00 2001
+From: Alex Deucher <alexander.deucher@amd.com>
+Date: Wed, 30 Jan 2019 11:32:03 -0500
+Subject: [PATCH libdrm] amdgpu: add some raven marketing names
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Acked-by: Christian König <christian.koenig@amd.com>
+Signed-off-by: Alex Deucher <alexander.deucher@amd.com>
+---
+ data/amdgpu.ids | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/data/amdgpu.ids b/data/amdgpu.ids
+index d9ed5660..d24c7ee6 100644
+--- a/data/amdgpu.ids
++++ b/data/amdgpu.ids
+@@ -4,6 +4,10 @@
+ # device_id,	revision_id,	product_name        <-- single tab after comma
+ 
+ 1.0.0
++15DD,	81,	AMD Ryzen Embedded V1807B with Radeon Vega Gfx
++15DD,	82,	AMD Ryzen Embedded V1756B with Radeon Vega Gfx
++15DD,	83,	AMD Ryzen Embedded V1605B with Radeon Vega Gfx
++15DD,	85,	AMD Ryzen Embedded V1202B with Radeon Vega Gfx
+ 6600,	0,	AMD Radeon HD 8600/8700M
+ 6600,	81,	AMD Radeon (TM) R7 M370
+ 6601,	0,	AMD Radeon (TM) HD 8500M/8700M
+-- 
+2.20.1
+

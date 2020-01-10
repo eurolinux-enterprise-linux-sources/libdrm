@@ -2,8 +2,8 @@
 
 Summary: Direct Rendering Manager runtime library
 Name: libdrm
-Version: 2.4.91
-Release: 3%{?dist}
+Version: 2.4.97
+Release: 2%{?dist}
 License: MIT
 Group: System Environment/Libraries
 URL: http://dri.sourceforge.net
@@ -33,6 +33,7 @@ BuildRequires: valgrind-devel
 BuildRequires: xorg-x11-util-macros
 
 Source2: 91-drm-modeset.rules
+Source3: README.rst
 
 # hardcode the 666 instead of 660 for device nodes
 Patch3: libdrm-make-dri-perms-okay.patch
@@ -41,12 +42,10 @@ Patch4: libdrm-2.4.0-no-bc.patch
 # make rule to print the list of test programs
 Patch5: libdrm-2.4.25-check-programs.patch
 
-# backport new intel pci-ids
-Patch10: 0001-intel-intel_chipset.h-Sync-Cannonlake-IDs.patch
-Patch11: 0001-Intel-Add-a-Kaby-Lake-PCI-ID.patch
-Patch12: 0001-intel-add-support-for-ICL-11.patch
-Patch13: 0001-intel-Introducing-Whiskey-Lake-platform.patch
-Patch14: 0001-intel-Introducing-Amber-Lake-platform.patch
+# amdgpu names update
+Patch10: 0001-amdgpu-add-some-raven-marketing-names.patch
+# intel pciids update
+Patch11: 0001-intel-sync-i915_pciids.h-with-kernel.patch
 
 %description
 Direct Rendering Manager runtime library
@@ -74,12 +73,8 @@ Utility programs for the kernel DRM interface.  Will void your warranty.
 %patch3 -p1 -b .forceperms
 %patch4 -p1 -b .no-bc
 %patch5 -p1 -b .check
-
-%patch10 -p1
-%patch11 -p1
-%patch12 -p1
-%patch13 -p1
-%patch14 -p1
+%patch10 -p1 -b .amdnames
+%patch11 -p1 -b .intelid
 
 %build
 autoreconf -v --install || exit 1
@@ -95,6 +90,7 @@ make %{?_smp_mflags}
 pushd tests
 make %{?smp_mflags} `make check-programs`
 popd
+cp %{SOURCE3} .
 
 %install
 make install DESTDIR=$RPM_BUILD_ROOT
@@ -104,6 +100,7 @@ for foo in $(make check-programs) ; do
 libtool --mode=install install -m 0755 $foo %{buildroot}%{_bindir}
 done
 popd
+
 # SUBDIRS=libdrm
 mkdir -p $RPM_BUILD_ROOT/usr/lib/udev/rules.d/
 install -m 0644 %{SOURCE2} $RPM_BUILD_ROOT/usr/lib/udev/rules.d/
@@ -120,7 +117,7 @@ done
 
 %files
 %defattr(-,root,root,-)
-%doc README
+%doc README.rst
 %{_libdir}/libdrm.so.2
 %{_libdir}/libdrm.so.2.4.0
 %ifarch %{ix86} x86_64 ia64
@@ -243,6 +240,12 @@ done
 %{_mandir}/man7/drm*.7*
 
 %changelog
+* Wed Feb 20 2019 Dave Airlie <airlied@redhat.com> - 2.4.97-2
+- Add some new i915 pci ids, and amd marketing names
+
+* Thu Jan 31 2019 Dave Airlie <airlied@redhat.com> - 2.4.97-1
+- libdrm 2.4.97 (readd README)
+
 * Wed Aug 22 2018 Rob Clark <rclark@redhat.com> - 2.4.91-3
 - Add WHL, AML, etc PCI IDs
 

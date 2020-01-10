@@ -1,0 +1,117 @@
+From 70a1ae89be6b9f9a535f1fbaff3e4b1c4bb46d4a Mon Sep 17 00:00:00 2001
+From: Rodrigo Vivi <rodrigo.vivi@intel.com>
+Date: Fri, 1 Feb 2019 23:43:01 -0800
+Subject: [PATCH libdrm] intel: sync i915_pciids.h with kernel
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Straight copy from the kernel file.
+
+Add more PCI Device IDs for Coffee Lake, Ice Lake,
+and Amber Lake. It also include a reorg on Whiskey Lake IDs.
+
+Align with kernel commits:
+
+5e0f5a58b167 ("drm/i915/cfl: Adding another PCI Device ID.")
+03ca3cf8e9aa ("drm/i915/icl: Adding few more device IDs for Ice Lake")
+c0c46ca461f1 ("drm/i915/aml: Add new Amber Lake PCI ID")
+c1c8f6fa731b ("drm/i915: Redefine some Whiskey Lake SKUs")
+
+Cc: José Roberto de Souza <jose.souza@intel.com>
+Signed-off-by: Rodrigo Vivi <rodrigo.vivi@intel.com>
+Acked-by: Lionel Landwerlin <lionel.g.landwerlin@intel.com>
+---
+ intel/i915_pciids.h | 29 +++++++++++++++++++++--------
+ 1 file changed, 21 insertions(+), 8 deletions(-)
+
+diff --git a/intel/i915_pciids.h b/intel/i915_pciids.h
+index fd965ffb..d2fad7b0 100644
+--- a/intel/i915_pciids.h
++++ b/intel/i915_pciids.h
+@@ -365,16 +365,20 @@
+ 	INTEL_VGA_DEVICE(0x593B, info) /* Halo GT4 */
+ 
+ /* AML/KBL Y GT2 */
+-#define INTEL_AML_GT2_IDS(info) \
++#define INTEL_AML_KBL_GT2_IDS(info) \
+ 	INTEL_VGA_DEVICE(0x591C, info),  /* ULX GT2 */ \
+ 	INTEL_VGA_DEVICE(0x87C0, info) /* ULX GT2 */
+ 
++/* AML/CFL Y GT2 */
++#define INTEL_AML_CFL_GT2_IDS(info) \
++	INTEL_VGA_DEVICE(0x87CA, info)
++
+ #define INTEL_KBL_IDS(info) \
+ 	INTEL_KBL_GT1_IDS(info), \
+ 	INTEL_KBL_GT2_IDS(info), \
+ 	INTEL_KBL_GT3_IDS(info), \
+ 	INTEL_KBL_GT4_IDS(info), \
+-	INTEL_AML_GT2_IDS(info)
++	INTEL_AML_KBL_GT2_IDS(info)
+ 
+ /* CFL S */
+ #define INTEL_CFL_S_GT1_IDS(info) \
+@@ -390,6 +394,9 @@
+ 	INTEL_VGA_DEVICE(0x3E9A, info)  /* SRV GT2 */
+ 
+ /* CFL H */
++#define INTEL_CFL_H_GT1_IDS(info) \
++	INTEL_VGA_DEVICE(0x3E9C, info)
++
+ #define INTEL_CFL_H_GT2_IDS(info) \
+ 	INTEL_VGA_DEVICE(0x3E9B, info), /* Halo GT2 */ \
+ 	INTEL_VGA_DEVICE(0x3E94, info)  /* Halo GT2 */
+@@ -407,27 +414,29 @@
+ 
+ /* WHL/CFL U GT1 */
+ #define INTEL_WHL_U_GT1_IDS(info) \
+-	INTEL_VGA_DEVICE(0x3EA1, info)
++	INTEL_VGA_DEVICE(0x3EA1, info), \
++	INTEL_VGA_DEVICE(0x3EA4, info)
+ 
+ /* WHL/CFL U GT2 */
+ #define INTEL_WHL_U_GT2_IDS(info) \
+-	INTEL_VGA_DEVICE(0x3EA0, info)
++	INTEL_VGA_DEVICE(0x3EA0, info), \
++	INTEL_VGA_DEVICE(0x3EA3, info)
+ 
+ /* WHL/CFL U GT3 */
+ #define INTEL_WHL_U_GT3_IDS(info) \
+-	INTEL_VGA_DEVICE(0x3EA2, info), \
+-	INTEL_VGA_DEVICE(0x3EA3, info), \
+-	INTEL_VGA_DEVICE(0x3EA4, info)
++	INTEL_VGA_DEVICE(0x3EA2, info)
+ 
+ #define INTEL_CFL_IDS(info)	   \
+ 	INTEL_CFL_S_GT1_IDS(info), \
+ 	INTEL_CFL_S_GT2_IDS(info), \
++	INTEL_CFL_H_GT1_IDS(info), \
+ 	INTEL_CFL_H_GT2_IDS(info), \
+ 	INTEL_CFL_U_GT2_IDS(info), \
+ 	INTEL_CFL_U_GT3_IDS(info), \
+ 	INTEL_WHL_U_GT1_IDS(info), \
+ 	INTEL_WHL_U_GT2_IDS(info), \
+-	INTEL_WHL_U_GT3_IDS(info)
++	INTEL_WHL_U_GT3_IDS(info), \
++	INTEL_AML_CFL_GT2_IDS(info)
+ 
+ /* CNL */
+ #define INTEL_CNL_IDS(info) \
+@@ -452,9 +461,13 @@
+ 	INTEL_VGA_DEVICE(0x8A51, info), \
+ 	INTEL_VGA_DEVICE(0x8A5C, info), \
+ 	INTEL_VGA_DEVICE(0x8A5D, info), \
++	INTEL_VGA_DEVICE(0x8A59, info),	\
++	INTEL_VGA_DEVICE(0x8A58, info),	\
+ 	INTEL_VGA_DEVICE(0x8A52, info), \
+ 	INTEL_VGA_DEVICE(0x8A5A, info), \
+ 	INTEL_VGA_DEVICE(0x8A5B, info), \
++	INTEL_VGA_DEVICE(0x8A57, info), \
++	INTEL_VGA_DEVICE(0x8A56, info), \
+ 	INTEL_VGA_DEVICE(0x8A71, info), \
+ 	INTEL_VGA_DEVICE(0x8A70, info)
+ 
+-- 
+2.20.1
+

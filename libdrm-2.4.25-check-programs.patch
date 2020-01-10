@@ -1,10 +1,10 @@
-diff -up libdrm-2.4.82/tests/Makefile.am.check libdrm-2.4.82/tests/Makefile.am
---- libdrm-2.4.82/tests/Makefile.am.check	2017-08-10 09:44:12.380441220 +1000
-+++ libdrm-2.4.82/tests/Makefile.am	2017-08-10 09:45:13.349056689 +1000
-@@ -45,3 +45,6 @@ TESTS = \
- check_PROGRAMS = \
- 	$(TESTS) \
- 	drmdevice
+diff -up libdrm-2.4.97/tests/Makefile.am.check libdrm-2.4.97/tests/Makefile.am
+--- libdrm-2.4.97/tests/Makefile.am.check	2019-01-31 11:00:21.248243193 +1000
++++ libdrm-2.4.97/tests/Makefile.am	2019-01-31 11:05:28.380528292 +1000
+@@ -51,3 +51,6 @@ bin_PROGRAMS = drmdevice
+ else
+ check_PROGRAMS += drmdevice
+ endif
 +
 +check-programs:
 +	@echo $(check_PROGRAMS)
