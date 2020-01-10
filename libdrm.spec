@@ -2,8 +2,8 @@
 
 Summary: Direct Rendering Manager runtime library
 Name: libdrm
-Version: 2.4.67
-Release: 3%{?dist}
+Version: 2.4.74
+Release: 1%{?dist}
 License: MIT
 Group: System Environment/Libraries
 URL: http://dri.sourceforge.net
@@ -41,14 +41,6 @@ Patch4: libdrm-2.4.0-no-bc.patch
 # make rule to print the list of test programs
 Patch5: libdrm-2.4.25-check-programs.patch
 
-# Missing PCI IDs.
-Patch10: 0001-intel-Adding-missing-Broxton-PCI-IDs.patch
-Patch11: 0001-intel-skl-Add-missing-SKL-PCI-IDs.patch
-
-# Kbl PCI IDs.
-Patch12: 0001-intel-Add-more-Kabylake-PCI-IDs.patch
-Patch13: 0002-intel-Removing-PCI-IDs-that-are-no-longer-listed-as-.patch
-
 %description
 Direct Rendering Manager runtime library
 
@@ -75,10 +67,6 @@ Utility programs for the kernel DRM interface.  Will void your warranty.
 %patch3 -p1 -b .forceperms
 %patch4 -p1 -b .no-bc
 %patch5 -p1 -b .check
-%patch10 -p1 -b .bxtid
-%patch11 -p1 -b .sklid
-%patch12 -p1 -b .kblid1
-%patch13 -p1 -b .kblid2
 
 %build
 autoreconf -v --install || exit 1
@@ -177,6 +165,7 @@ done
 # FIXME should be in drm/ too
 %{_includedir}/xf86drm.h
 %{_includedir}/xf86drmMode.h
+%{_includedir}/libsync.h
 %dir %{_includedir}/libdrm
 %{_includedir}/libdrm/drm.h
 %{_includedir}/libdrm/drm_fourcc.h
@@ -249,6 +238,9 @@ done
 %{_mandir}/man7/drm*.7*
 
 %changelog
+* Wed Jan 18 2017 Dave Airlie <airlied@redhat.com> - 2.4.74-1
+- libdrm 2.4.74
+
 * Tue Aug 09 2016 Rob Clark <rclark@redhat.com> - 2.4.67-3
 - kbl pci ids.
 
