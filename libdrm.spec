@@ -2,8 +2,8 @@
 
 Summary: Direct Rendering Manager runtime library
 Name: libdrm
-Version: 2.4.74
-Release: 1%{?dist}
+Version: 2.4.83
+Release: 2%{?dist}
 License: MIT
 Group: System Environment/Libraries
 URL: http://dri.sourceforge.net
@@ -34,12 +34,17 @@ BuildRequires: xorg-x11-util-macros
 
 Source2: 91-drm-modeset.rules
 
+# backport from upstream master seems like it should be in here.
+Patch1: 0001-intel-Change-a-KBL-pci-id-to-GT2-from-GT1.5.patch
 # hardcode the 666 instead of 660 for device nodes
 Patch3: libdrm-make-dri-perms-okay.patch
 # remove backwards compat not needed on Fedora
 Patch4: libdrm-2.4.0-no-bc.patch
 # make rule to print the list of test programs
 Patch5: libdrm-2.4.25-check-programs.patch
+
+#Backport some intel pci ids.
+Patch10: 0002-intel-Add-more-Coffeelake-PCI-IDs.patch
 
 %description
 Direct Rendering Manager runtime library
@@ -64,9 +69,12 @@ Utility programs for the kernel DRM interface.  Will void your warranty.
 
 %prep
 %setup -q %{?gitdate:-n %{name}-%{gitdate}}
+%patch1 -p1 -b .intelfix
 %patch3 -p1 -b .forceperms
 %patch4 -p1 -b .no-bc
 %patch5 -p1 -b .check
+
+%patch10 -p1 -b .cfl
 
 %build
 autoreconf -v --install || exit 1
@@ -134,20 +142,12 @@ done
 %{_libdir}/libdrm_nouveau.so.2.0.0
 %{_libdir}/libkms.so.1
 %{_libdir}/libkms.so.1.0.0
+%{_datadir}/libdrm/amdgpu.ids
 /usr/lib/udev/rules.d/91-drm-modeset.rules
 
 %files -n drm-utils
 %defattr(-,root,root,-)
-%{_bindir}/dristat
-%{_bindir}/drmstat
 %{_bindir}/drmdevice
-%{_bindir}/getclient
-%{_bindir}/getstats
-%{_bindir}/getversion
-%{_bindir}/name_from_fd
-%{_bindir}/openclose
-%{_bindir}/setversion
-%{_bindir}/updatedraw
 %{_bindir}/modetest
 %{_bindir}/modeprint
 %{_bindir}/vbltest
@@ -238,6 +238,12 @@ done
 %{_mandir}/man7/drm*.7*
 
 %changelog
+* Fri Jan 12 2018 Dave Airlie <airlied@redhat.com> - 2.4.83-2
+- Add some Coffeelake PCI IDs
+
+* Fri Oct 06 2017 Dave Airlie <airlied@redhat.com> - 2.4.83-1
+- libdrm 2.4.83
+
 * Wed Jan 18 2017 Dave Airlie <airlied@redhat.com> - 2.4.74-1
 - libdrm 2.4.74
 
